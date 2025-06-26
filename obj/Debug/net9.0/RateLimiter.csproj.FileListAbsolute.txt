@@ -1,0 +1,14 @@
+/Users/toledano/Desktop/Products/RateLimiter/bin/Debug/net9.0/RateLimiter
+/Users/toledano/Desktop/Products/RateLimiter/bin/Debug/net9.0/RateLimiter.deps.json
+/Users/toledano/Desktop/Products/RateLimiter/bin/Debug/net9.0/RateLimiter.runtimeconfig.json
+/Users/toledano/Desktop/Products/RateLimiter/bin/Debug/net9.0/RateLimiter.dll
+/Users/toledano/Desktop/Products/RateLimiter/bin/Debug/net9.0/RateLimiter.pdb
+/Users/toledano/Desktop/Products/RateLimiter/obj/Debug/net9.0/RateLimiter.GeneratedMSBuildEditorConfig.editorconfig
+/Users/toledano/Desktop/Products/RateLimiter/obj/Debug/net9.0/RateLimiter.AssemblyInfoInputs.cache
+/Users/toledano/Desktop/Products/RateLimiter/obj/Debug/net9.0/RateLimiter.AssemblyInfo.cs
+/Users/toledano/Desktop/Products/RateLimiter/obj/Debug/net9.0/RateLimiter.csproj.CoreCompileInputs.cache
+/Users/toledano/Desktop/Products/RateLimiter/obj/Debug/net9.0/RateLimiter.dll
+/Users/toledano/Desktop/Products/RateLimiter/obj/Debug/net9.0/refint/RateLimiter.dll
+/Users/toledano/Desktop/Products/RateLimiter/obj/Debug/net9.0/RateLimiter.pdb
+/Users/toledano/Desktop/Products/RateLimiter/obj/Debug/net9.0/RateLimiter.genruntimeconfig.cache
+/Users/toledano/Desktop/Products/RateLimiter/obj/Debug/net9.0/ref/RateLimiter.dll
