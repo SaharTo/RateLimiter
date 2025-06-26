@@ -26,6 +26,15 @@ intent of "1000 per day."
 In contrast, the sliding window always checks the *last N seconds/minutes/hours*
 relative to now — so you can’t “cheat” by waiting for the clock to reset.
 
+Pros:
+- It provides a much more accurate way to enforce rate limits over time.
+- Prevents burst traffic across artificial reset boundaries (e.g., midnight).
+
+Cons:
+- Slightly more complex to implement than absolute windowing “reset every X minutes” approach.
+- Requires tracking execution history (e.g., using a queue of timestamps).
+- Can consume a bit more memory depending on request volume.
+
 ────────────────────────────
 Thread Safety
 ────────────────────────────
