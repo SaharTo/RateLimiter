@@ -26,6 +26,16 @@ intent of "1000 per day."
 In contrast, the sliding window always checks the *last N seconds/minutes/hours*
 relative to now — so you can’t “cheat” by waiting for the clock to reset.
 
+────────────────────────────
+How It Works
+────────────────────────────
+Each RateLimit exposes two steps:
+1. `CheckDelay()` — checks if the rate limit would allow an action right now.
+2. `RecordTimestamp()` — is called only after the action is confirmed to run.
+
+All rate limits are checked first, and only if all are ready, we commit and execute.
+
+────────────────────────────
 Pros:
 - It provides a much more accurate way to enforce rate limits over time.
 - Prevents burst traffic across artificial reset boundaries (e.g., midnight).
@@ -39,11 +49,7 @@ Cons:
 Thread Safety
 ────────────────────────────
 Each RateLimit instance holds a queue of timestamps and uses a private lock to
-safely check and update that queue when multiple threads are calling `Perform()`.
-
-`RateLimiter<TArg>` itself coordinates multiple rate limits by awaiting all
-of their `WaitUntilAllowedAsync()` calls in parallel. Only when all are ready
-does it execute the actual user function.
+safely check and update that queue when multiple threads are calling in parallel.
 
 ────────────────────────────
 Usage
@@ -74,37 +80,32 @@ namespace RateLimiter
         }
 
         /// <summary>
-        /// Waits asynchronously until the rate limit permits the next operation.
-        /// Enforces the sliding window logic by cleaning up expired entries
-        /// and delaying if necessary.
+        /// CheckDelay is checking the queue of timestamps before allowing execution.
         /// </summary>
-        public async Task WaitUntilAllowedAsync()
+
+        public TimeSpan CheckDelay()
         {
-            while (true)
+            lock (_lock)
             {
-                DateTime now = DateTime.UtcNow;
-                TimeSpan delay = TimeSpan.Zero;
+                var now = DateTime.UtcNow;
 
-                lock (_lock)
-                {
-                    // Remove timestamps outside the current sliding window
-                    while (_timestamps.Count > 0 && (now - _timestamps.Peek()) > _window)
-                        _timestamps.Dequeue();
+                // Remove timestamps outside the current sliding window
+                while (_timestamps.Count > 0 && (now - _timestamps.Peek()) > _window)
+                    _timestamps.Dequeue();
 
-                    if (_timestamps.Count < _maxCount)
-                    {
-                        _timestamps.Enqueue(now);
-                        return;
-                    }
+                if (_timestamps.Count < _maxCount)
+                    return TimeSpan.Zero;
 
-                    var oldest = _timestamps.Peek();
-                    delay = oldest + _window - now;
+                return _timestamps.Peek() + _window - now; // Calculate how long to wait until the next allowed execution
+            }
+        }
 
-                    Console.WriteLine($"[{now:HH:mm:ss.fff}] Rate limit exceeded. Waiting for {delay.TotalMilliseconds:F0} ms.");
-                }
-
-                if (delay > TimeSpan.Zero)
-                    await Task.Delay(delay);
+        // Records the current time only after all rate limits approve execution
+        public void RecordTimestamp()
+        {
+            lock (_lock)
+            {
+                _timestamps.Enqueue(DateTime.UtcNow);
             }
         }
     }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace RateLimiter
@@ -14,6 +15,7 @@ namespace RateLimiter
     {
         private readonly Func<TArg, Task> _func;
         private readonly List<RateLimit> _limits;
+        private readonly SemaphoreSlim _semaphore = new(1, 1);
 
         public RateLimiter(Func<TArg, Task> func, IEnumerable<RateLimit> limits)
         {
@@ -27,12 +29,35 @@ namespace RateLimiter
         /// <param name="arg">The input to pass to the function.</param>
         public async Task Perform(TArg arg)
         {
-            // Wait for all rate limits to allow execution
-            var waitTasks = _limits.Select(l => l.WaitUntilAllowedAsync());
-            await Task.WhenAll(waitTasks);
+            await _semaphore.WaitAsync(); // Only one task may proceed at a time, bascially controlling concurrency
 
-            // Execute the function
-            await _func(arg);
+            try
+            {
+                while (true)
+                {
+                    // Check delays across all rate limits, then check the maximum delay
+                    var delays = _limits.Select(l => l.CheckDelay()).ToList();
+                    var maxDelay = delays.Max();
+
+                    // All limits allow execution at this moment
+                    if (maxDelay == TimeSpan.Zero)
+                    {
+                        // Proceed to record timestamps and execute the function only when all limits are ready
+                        foreach (var limit in _limits)
+                            limit.RecordTimestamp(); // Add a timestamp to each limiter
+
+                        await _func(arg); // Execute the user-provided function
+                        return;
+                    }
+
+                    // Wait once for the largest delay required among all rate limits
+                    await Task.Delay(maxDelay);
+                }
+            }
+            finally
+            {
+                _semaphore.Release(); // Release the current task from semaphore and allow the next task to begin
+            }
         }
     }
 }

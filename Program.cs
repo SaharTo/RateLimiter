@@ -13,7 +13,7 @@ class Program
     {
         var rateLimits = new List<RateLimit>
         {
-            new RateLimit(10, TimeSpan.FromSeconds(1)),
+            new RateLimit(1, TimeSpan.FromSeconds(1)),
             new RateLimit(100, TimeSpan.FromMinutes(1)),
             new RateLimit(1000, TimeSpan.FromHours(24))
         };
@@ -22,7 +22,7 @@ class Program
 
         // Simulate 50 concurrent calls fetching posts with IDs 1 to 50
         var tasks = Enumerable.Range(1, 50)
-            .Select(id => Task.Run(() => rateLimiter.Perform(id)))
+            .Select(rateLimiter.Perform)
             .ToArray();
 
         await Task.WhenAll(tasks);
@@ -36,11 +36,11 @@ class Program
 
         try
         {
+            Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] ✅ Executing task {postId}");
             var response = await httpClient.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
-                var content = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"[{DateTime.UtcNow:HH:mm:ss.fff}] Fetched post {postId} successfully.");
+                return;
             }
             else
             {
